@@ -7,4 +7,5 @@ use Illuminate\Support\Facades\Route;
 // });
 
 Route::livewire('/', 'pages::index');
-
+Route::livewire('/register', 'pages::auth.register');
+Route::livewire('/login', 'pages::auth.login');

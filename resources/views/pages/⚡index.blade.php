@@ -155,8 +155,8 @@ new class extends Component
 
             <nav class="space-x-6 relative">
                 <a href="#" class="hover:text-gray-300">Home</a>
-                <a href="#" class="hover:text-gray-300">My Backlog</a>
-                <a href="#" class="hover:text-gray-300">Completed</a>
+                <a href="#" class="hover:text-gray-300">Meu Backlog</a>
+                <a href="#" class="hover:text-gray-300">Completos</a>
                 <a href="#" class="hover:text-gray-300">Wishlist</a>
                 <div class="relative inline-block">
                     <button wire:click="toggleMenu" class="hover:text-gray-300">

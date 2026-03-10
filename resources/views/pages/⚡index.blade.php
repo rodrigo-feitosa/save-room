@@ -21,9 +21,21 @@ new class extends Component
     public $search = '';
     public $searchResults = [];
 
+    public $showMenu = false;
+
+    public function toggleMenu()
+    {
+        $this->showMenu = !$this->showMenu;
+    }
+
     public function mount()
     {
-        $this->games = Game::latest()->get();
+        $response = Http::get('https://api.rawg.io/api/games', [
+            'key' => env('RAWG_API_KEY'),
+            'page_size' => 12
+        ]);
+
+        $this->games = $response->json()['results'] ?? [];
     }
 
     public function openModal()
@@ -98,13 +110,12 @@ new class extends Component
 ?>
 
 <div class="min-h-screen bg-gray-100">
-
     <!-- Header -->
     <header class="bg-gray-900 text-white">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">GameBacklog</h1>
+            <h1 class="text-2xl font-bold">SaveRoom</h1>
 
-            <div>
+            <div class="relative w-72">
                 <input
                     type="text"
                     wire:model.debounce.500ms="search"
@@ -114,7 +125,7 @@ new class extends Component
                 >
 
                 @if(count($searchResults) > 0)
-                    <div class="border rounded mt-2 bg-white max-h-60 overflow-y-auto">
+                    <div class="absolute left-0 top-full w-full border rounded mt-1 bg-white max-h-60 overflow-y-auto shadow-lg z-50">
                         @foreach($searchResults as $index => $result)
                             <div
                                 wire:click="selectGame({{ $index }})"
@@ -142,16 +153,50 @@ new class extends Component
                 @endif
             </div>
 
-            <nav class="space-x-6">
+            <nav class="space-x-6 relative">
                 <a href="#" class="hover:text-gray-300">Home</a>
                 <a href="#" class="hover:text-gray-300">My Backlog</a>
                 <a href="#" class="hover:text-gray-300">Completed</a>
                 <a href="#" class="hover:text-gray-300">Wishlist</a>
+                <div class="relative inline-block">
+                    <button wire:click="toggleMenu" class="hover:text-gray-300">
+                        <i class="fa-solid fa-user"></i>
+                    </button>
+
+                    @if($showMenu)
+                        <div class="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg">
+                            @auth
+                                <a href="/profile" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
+                                    Perfil
+                                </a>
+                                <a href="/backlog" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
+                                    Meu Backlog
+                                </a>
+
+                                <form method="POST" action="/logout">
+                                    @csrf
+                                    <button class="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
+                                        Logout
+                                    </button>
+                                </form>
+                            @endauth
+
+                            @guest
+                                <a href="/login" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
+                                    Login
+                                </a>
+                                <a href="/register" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
+                                    Registrar
+                                </a>
+                            @endguest
+                        </div>
+                    @endif
+                </div>
             </nav>
         </div>
     </header>
 
-    <!-- Hero -->
+    <!-- Seção Hero -->
     <section class="bg-white border-b">
         <div class="max-w-7xl mx-auto px-6 py-16 text-center">
             <h2 class="text-4xl font-bold mb-4">Organize seu backlog de jogos.</h2>
@@ -164,21 +209,25 @@ new class extends Component
         </div>
     </section>
 
-    <!-- Backlog -->
+    <!--  Lista de Jogos -->
     <section class="max-w-7xl mx-auto px-6 py-12">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-semibold">Seu backlog</h3>
-
+            <h3 class="text-2xl font-semibold">Lista de Jogos</h3>
             <button class="text-indigo-600 hover:underline">Ver todos</button>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             @foreach ($games as $game)
                 <div class="bg-white rounded-xl shadow hover:shadow-lg transition">
-                    <img src="{{ $game->cover ?? 'https://placehold.co/300x400' }}" class="rounded-t-xl w-full">
+                    <img src="{{ $game['background_image'] }}" class="rounded-t-xl w-full">
                     <div class="p-3">
-                        <h4 class="font-semibold text-sm">{{ $game->title }}</h4>
-                        <p class="text-xs text-gray-500">{{ $game->developer }}</p>
+                        <h4 class="font-semibold text-sm">{{ $game['name'] }}</h4>
+                        <p class="text-xs text-gray-500">{{ $game['released'] }}</p>
+                        @if(isset($game['metacritic']))
+                            <span class="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                                {{ $game['metacritic'] }}
+                            </span>
+                        @endif
                     </div>
                 </div>
             @endforeach

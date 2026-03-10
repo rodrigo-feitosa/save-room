@@ -2,7 +2,7 @@
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
-use App\Models\Game;
+use App\Models\GameUser;
 
 new class extends Component
 {
@@ -22,6 +22,8 @@ new class extends Component
     public $searchResults = [];
 
     public $showMenu = false;
+
+    public $rawg_id;
 
     public function toggleMenu()
     {
@@ -70,41 +72,61 @@ new class extends Component
     {
         $game = $this->searchResults[$index];
 
-        $this->title = $game['name'] ?? '';
-        $this->release_date = $game['released'] ?? '';
-        $this->cover = $game['background_image'] ?? '';
-        $this->metacritic_score = $game['metacritic'] ?? null;
+        $response = Http::get("https://api.rawg.io/api/games/{$game['id']}", [
+            'key' => env('RAWG_API_KEY')
+        ]);
+
+        $details = $response->json();
+
+        $this->title = $details['name'] ?? '';
+        $this->description = strip_tags($details['description'] ?? '');
+        $this->release_date = $details['released'] ?? '';
+        $this->cover = $details['background_image'] ?? '';
+        $this->metacritic_score = $details['metacritic'] ?? null;
+
+        $this->developer = $details['developers'][0]['name'] ?? '';
+        $this->publisher = $details['publishers'][0]['name'] ?? '';
 
         $this->searchResults = [];
-        $this->search = $game['name'];
+        $this->search = $details['name'];
+
+        $this->openModal();
     }
 
     public function addGame()
     {
-        $game = Game::create([
-            'title' => $this->title,
-            'description' => $this->description,
-            'release_date' => $this->release_date,
-            'cover' => $this->cover,
-            'developer' => $this->developer,
-            'publisher' => $this->publisher,
-            'metacritic_score' => $this->metacritic_score,
+        if (!auth()->check()) {
+            return redirect('/login');
+        }
+
+        GameUser::create([
+            'user_id' => auth()->id(),
+            'game_id' => $this->rawg_id,
         ]);
 
-        $this->games[] = $game;
+        $this->closeModal();
+    }
 
-        $this->reset([
-            'title',
-            'description',
-            'release_date',
-            'cover',
-            'developer',
-            'publisher',
-            'metacritic_score',
-            'search'
+    public function addFromRawg($rawgId)
+    {
+        $this->rawg_id = $rawgId;
+
+        $response = Http::get("https://api.rawg.io/api/games/{$rawgId}", [
+            'key' => env('RAWG_API_KEY')
         ]);
 
-        $this->searchResults = [];
+        $game = $response->json();
+
+        $this->title = $game['name'] ?? '';
+        $this->description = strip_tags($game['description'] ?? '');
+        $this->release_date = $game['released'] ?? '';
+        $this->cover = $game['background_image'] ?? '';
+        $this->metacritic_score = $game['metacritic'] ?? null;
+
+        $this->developer = $game['developers'][0]['name'] ?? '';
+        $this->publisher = $game['publishers'][0]['name'] ?? '';
+
+        $this->showModal = true;
     }
 };
 ?>
@@ -200,12 +222,7 @@ new class extends Component
     <section class="bg-white border-b">
         <div class="max-w-7xl mx-auto px-6 py-16 text-center">
             <h2 class="text-4xl font-bold mb-4">Organize seu backlog de jogos.</h2>
-
             <p class="text-gray-600 mb-8">Acompanhe jogos que você quer jogar, está jogando ou já terminou.</p>
-            
-            <button wire:click="openModal" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">
-                Adicionar jogo
-            </button>
         </div>
     </section>
 
@@ -223,11 +240,15 @@ new class extends Component
                     <div class="p-3">
                         <h4 class="font-semibold text-sm">{{ $game['name'] }}</h4>
                         <p class="text-xs text-gray-500">{{ $game['released'] }}</p>
-                        @if(isset($game['metacritic']))
+                        <span class="space-x-2">
                             <span class="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                                <img src="{{ asset('imgs/metacritic_logo.png') }}" alt="Metacritic" class="w-4 h-4 inline mr-1">
                                 {{ $game['metacritic'] }}
                             </span>
-                        @endif
+                            <button wire:click="addFromRawg({{ $game['id'] }})" class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                Adicionar
+                            </button>
+                        </span>
                     </div>
                 </div>
             @endforeach
@@ -263,43 +284,43 @@ new class extends Component
 
     @if ($showModal)
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md ">
                 <h2 class="text-xl font-bold mb-4">Adicionar novo jogo</h2>
 
                 <form wire:submit.prevent="addGame" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Título</label>
-                        <input type="text" wire:model="title" class="w-full border rounded px-3 py-2">
+                        <input type="text" wire:model="title" class="w-full border rounded px-2 py-2" readonly>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Descrição</label>
-                        <textarea wire:model="description" class="w-full border rounded px-3 py-2"></textarea>
+                        <textarea wire:model="description" class="w-full border rounded px-2 py-2" readonly></textarea>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Data de lançamento</label>
-                        <input type="date" wire:model="release_date" class="w-full border rounded px-3 py-2">
+                        <input type="date" wire:model="release_date" class="w-full border rounded px-2 py-2" readonly>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Capa (URL)</label>
-                        <input type="text" wire:model="cover" class="w-full border rounded px-3 py-2">
+                        <input type="text" wire:model="cover" class="w-full border rounded px-2 py-2" readonly>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Desenvolvedor</label>
-                        <input type="text" wire:model="developer" class="w-full border rounded px-3 py-2">
+                        <input type="text" wire:model="developer" class="w-full border rounded px-2 py-2" readonly>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Publicadora</label>
-                        <input type="text" wire:model="publisher" class="w-full border rounded px-3 py-2">
+                        <input type="text" wire:model="publisher" class="w-full border rounded px-2 py-2" readonly>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Metacritic Score</label>
-                        <input type="number" wire:model="metacritic_score" min="0" max="100" class="w-full border rounded px-3 py-2">
+                        <input type="number" wire:model="metacritic_score" min="0" max="100" class="w-full border rounded px-2 py-2" readonly>
                     </div>
 
                     <div class="flex justify-end space-x-4">

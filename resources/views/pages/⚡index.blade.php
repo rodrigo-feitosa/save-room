@@ -15,6 +15,7 @@ new class extends Component
     public $developer;
     public $publisher;
     public $metacritic_score;
+    public $status = 'backlog';
 
     public $showModal = false;
 
@@ -102,6 +103,7 @@ new class extends Component
         GameUser::create([
             'user_id' => auth()->id(),
             'game_id' => $this->rawg_id,
+            'status' => $this->status
         ]);
 
         $this->closeModal();
@@ -133,90 +135,7 @@ new class extends Component
 
 <div class="min-h-screen bg-gray-100">
     <!-- Header -->
-    <header class="bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">SaveRoom</h1>
-
-            <div class="relative w-72">
-                <input
-                    type="text"
-                    wire:model.debounce.500ms="search"
-                    wire:keyup="searchGame"
-                    placeholder="Digite o nome do jogo..."
-                    class="w-full border rounded px-3 py-2"
-                >
-
-                @if(count($searchResults) > 0)
-                    <div class="absolute left-0 top-full w-full border rounded mt-1 bg-white max-h-60 overflow-y-auto shadow-lg z-50">
-                        @foreach($searchResults as $index => $result)
-                            <div
-                                wire:click="selectGame({{ $index }})"
-                                class="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
-                            >
-
-                                <img
-                                    src="{{ $result['background_image'] ?? 'https://placehold.co/60x80' }}"
-                                    class="w-12 h-16 object-cover rounded mr-3"
-                                >
-
-                                <div>
-                                    <div class="font-semibold text-sm text-gray-800">
-                                        {{ $result['name'] }}
-                                    </div>
-
-                                    <div class="text-xs text-gray-500">
-                                        {{ $result['released'] }}
-                                    </div>
-                                </div>
-
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-
-            <nav class="space-x-6 relative">
-                <a href="#" class="hover:text-gray-300">Home</a>
-                <a href="#" class="hover:text-gray-300">Meu Backlog</a>
-                <a href="#" class="hover:text-gray-300">Completos</a>
-                <a href="#" class="hover:text-gray-300">Wishlist</a>
-                <div class="relative inline-block">
-                    <button wire:click="toggleMenu" class="hover:text-gray-300">
-                        <i class="fa-solid fa-user"></i>
-                    </button>
-
-                    @if($showMenu)
-                        <div class="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg">
-                            @auth
-                                <a href="/profile" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
-                                    Perfil
-                                </a>
-                                <a href="/backlog" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
-                                    Meu Backlog
-                                </a>
-
-                                <form method="POST" action="/logout">
-                                    @csrf
-                                    <button class="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
-                                        Logout
-                                    </button>
-                                </form>
-                            @endauth
-
-                            @guest
-                                <a href="/login" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
-                                    Login
-                                </a>
-                                <a href="/register" class="block w-full text-left px-4 py-2 text-black hover:bg-gray-100">
-                                    Registrar
-                                </a>
-                            @endguest
-                        </div>
-                    @endif
-                </div>
-            </nav>
-        </div>
-    </header>
+    <livewire:header />
 
     <!-- Seção Hero -->
     <section class="bg-white border-b">
@@ -230,13 +149,13 @@ new class extends Component
     <section class="max-w-7xl mx-auto px-6 py-12">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-2xl font-semibold">Lista de Jogos</h3>
-            <button class="text-indigo-600 hover:underline">Ver todos</button>
+            <a href="/games" class="text-indigo-600 hover:underline">Ver todos</a>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             @foreach ($games as $game)
                 <div class="bg-white rounded-xl shadow hover:shadow-lg transition">
-                    <img src="{{ $game['background_image'] }}" class="rounded-t-xl w-full">
+                    <img src="{{ $game['background_image'] }}" class="rounded-t-xl object-cover w-full h-40">
                     <div class="p-3">
                         <h4 class="font-semibold text-sm">{{ $game['name'] }}</h4>
                         <p class="text-xs text-gray-500">{{ $game['released'] }}</p>
@@ -276,11 +195,7 @@ new class extends Component
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-gray-400 text-center py-6 mt-10">
-        SaveRoom © {{ date('Y') }}
-    </footer>
-
+    <livewire:footer />
 
     @if ($showModal)
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -321,6 +236,17 @@ new class extends Component
                     <div>
                         <label class="block text-sm font-medium mb-1">Metacritic Score</label>
                         <input type="number" wire:model="metacritic_score" min="0" max="100" class="w-full border rounded px-2 py-2" readonly>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Status</label>
+                        <select wire:model="status" class="w-full border rounded px-2 py-2">
+                            <option value="backlog">Backlog</option>
+                            <option value="playing">Jogando</option>
+                            <option value="completed">Completado</option>
+                            <option value="dropped">Abandonado</option>
+                            <option value="wishlist">Wishlist</option>
+                        </select>
                     </div>
 
                     <div class="flex justify-end space-x-4">

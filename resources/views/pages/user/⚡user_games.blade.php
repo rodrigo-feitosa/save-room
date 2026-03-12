@@ -7,6 +7,7 @@ use App\Models\GameUser;
 new class extends Component
 {
     public $games = [];
+    public $activeMenu = null;
 
     public function mount()
     {
@@ -30,6 +31,15 @@ new class extends Component
             ];
         })->toArray();
     }
+
+    public function toggleMenu($gameId)
+    {
+        if ($this->activeMenu === $gameId) {
+            $this->activeMenu = null;
+        } else {
+            $this->activeMenu = $gameId;
+        }
+    }
 };
 ?>
 <div class="min-h-screen bg-gray-100">
@@ -49,7 +59,24 @@ new class extends Component
         @else
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 @foreach ($games as $game)
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
+                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden relative">
+                        <div class="">
+                            <button wire:click="toggleMenu({{ $game['id'] }})" class="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full p-1 shadow">
+                                <x-heroicon-o-ellipsis-vertical class="w-5 h-5 text-gray-600" />
+                            </button>
+
+                            @if($activeMenu === $game['id'])
+                                <div class="absolute right-2 top-10 w-40 bg-white rounded-lg shadow-lg z-10">
+                                    <button class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
+                                        Atualizar status
+                                    </button>
+
+                                    <button class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500">
+                                        Remover
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
                         <img
                             src="{{ $game['cover'] ?? 'https://placehold.co/600x800' }}"
                             class="w-full h-40 object-cover"

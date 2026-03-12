@@ -3,8 +3,9 @@
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
 use App\Models\GameUser;
+use Livewire\Attributes\Layout;
 
-new class extends Component
+new #[Layout('layouts::app')] class extends Component
 {
     public $games = [];
 
@@ -103,7 +104,14 @@ new class extends Component
         GameUser::create([
             'user_id' => auth()->id(),
             'game_id' => $this->rawg_id,
-            'status' => $this->status
+            'status' => $this->status,
+            'title' => $this->title,
+            'description' => $this->description,
+            'cover' => $this->cover,
+            'released_date' => $this->release_date,
+            'metacritic_score' => $this->metacritic_score,
+            'developers' => $this->developer,
+            'publisher' => $this->publisher,
         ]);
 
         $this->closeModal();
@@ -133,15 +141,15 @@ new class extends Component
 };
 ?>
 
-<div class="min-h-screen bg-gray-100">
+<div class="min-h-screen">
     <!-- Header -->
     <livewire:header />
 
     <!-- Seção Hero -->
-    <section class="bg-white border-b">
+    <section class="border-b">
         <div class="max-w-7xl mx-auto px-6 py-16 text-center">
             <h2 class="text-4xl font-bold mb-4">Organize seu backlog de jogos.</h2>
-            <p class="text-gray-600 mb-8">Acompanhe jogos que você quer jogar, está jogando ou já terminou.</p>
+            <p class="mb-8">Acompanhe jogos que você quer jogar, está jogando ou já terminou.</p>
         </div>
     </section>
 
@@ -164,7 +172,7 @@ new class extends Component
                                 <img src="{{ asset('imgs/metacritic_logo.png') }}" alt="Metacritic" class="w-4 h-4 inline mr-1">
                                 {{ $game['metacritic'] }}
                             </span>
-                            <button wire:click="addFromRawg({{ $game['id'] }})" class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                            <button wire:click="addFromRawg({{ $game['id'] }})" class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 cursor-pointer">
                                 Adicionar
                             </button>
                         </span>

@@ -16,19 +16,19 @@ new class extends Component
 
         $userGames = GameUser::where('user_id', auth()->id())->get();
 
-        foreach ($userGames as $game) {
-
-            $response = Http::get("https://api.rawg.io/api/games/{$game->game_id}", [
-                'key' => env('RAWG_API_KEY')
-            ]);
-
-            $data = $response->json();
-
-            if ($data) {
-                $data['status'] = $game->status;
-                $this->games[] = $data;
-            }
-        }
+        $this->games = $userGames->map(function ($gameUser) {
+            return [
+                'id' => $gameUser->game_id,
+                'title' => $gameUser->title,
+                'description' => $gameUser->description,
+                'cover' => $gameUser->cover,
+                'released_date' => $gameUser->released_date,
+                'metacritic_score' => $gameUser->metacritic_score,
+                'developers' => $gameUser->developers,
+                'publisher' => $gameUser->publisher,
+                'status' => $gameUser->status
+            ];
+        })->toArray();
     }
 };
 ?>
@@ -51,27 +51,34 @@ new class extends Component
                 @foreach ($games as $game)
                     <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
                         <img
-                            src="{{ $game['background_image'] ?? 'https://placehold.co/600x800' }}"
+                            src="{{ $game['cover'] ?? 'https://placehold.co/600x800' }}"
                             class="w-full h-40 object-cover"
                         >
+
                         <div class="p-3">
                             <h4 class="font-semibold text-sm line-clamp-2">
-                                {{ $game['name'] }}
+                                {{ $game['title'] }}
                             </h4>
+
                             <p class="text-xs text-gray-500">
-                                {{ $game['released'] ?? 'Sem data' }}
+                                {{ $game['released_date'] ?? 'Sem data' }}
                             </p>
 
                             <div class="flex items-center gap-1 mt-2">
                                 <span class="text-xs bg-green-500 text-white px-2 py-1 rounded flex items-center">
-                                    <img
-                                        src="{{ asset('imgs/metacritic_logo.png') }}"
-                                        class="w-4 h-4 mr-1"
-                                    >
-                                    {{ $game['metacritic'] ?? 'N/A' }}
+                                    <img src="{{ asset('imgs/metacritic_logo.png') }}" class="w-4 h-4 mr-1">
+                                    {{ $game['metacritic_score'] ?? 'N/A' }}
                                 </span>
-                                <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-                                    {{ $game['status'] }}
+
+                                <span class="text-xs text-white px-2 py-1 rounded
+                                    @if($game['status'] === 'backlog') bg-gray-500
+                                    @elseif($game['status'] === 'playing') bg-blue-500
+                                    @elseif($game['status'] === 'completed') bg-green-500
+                                    @elseif($game['status'] === 'dropped') bg-red-500
+                                    @elseif($game['status'] === 'wishlist') bg-purple-500
+                                    @endif
+                                ">
+                                    {{ ucfirst($game['status']) }}
                                 </span>
                             </div>
                         </div>

@@ -11,6 +11,14 @@ class GameUser extends Model
     protected $fillable = [
         'user_id',
         'game_id',
+        'status',
+        'title',
+        'description',
+        'cover',
+        'released_date',
+        'metacritic_score',
+        'developers',
+        'publisher',
     ];
 
     public function user()

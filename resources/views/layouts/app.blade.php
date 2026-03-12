@@ -11,7 +11,7 @@
 
         @livewireStyles
     </head>
-    <body>
+    <body class="bg-gray-100">
         {{ $slot }}
 
         @livewireScripts

@@ -83,11 +83,9 @@ new class extends Component
 
         <nav class="space-x-6 relative">
             <a href="/" class="hover:text-gray-300">Home</a>
-            <a href="/user-games" class="hover:text-gray-300">Meu Backlog</a>
-            <a href="/completed" class="hover:text-gray-300">Completos</a>
-            <a href="/wishlist" class="hover:text-gray-300">Wishlist</a>
+            <a href="/user-games" class="hover:text-gray-300">Meus jogos</a>
             <div class="relative inline-block">
-                <button wire:click="toggleMenu" class="hover:text-gray-300">
+                <button wire:click="toggleMenu" class="hover:text-gray-300 cursor-pointer">
                     <i class="fa-solid fa-user"></i>
                 </button>
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class GameUser extends Model
 {
@@ -20,6 +21,8 @@ class GameUser extends Model
         'developers',
         'publisher',
     ];
+
+    use SoftDeletes;
 
     public function user()
     {

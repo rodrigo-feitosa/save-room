@@ -11,8 +11,14 @@
 
         @livewireStyles
     </head>
-    <body class="bg-gray-100">
-        {{ $slot }}
+    <body class="min-h-screen flex flex-col">
+        <livewire:header />
+
+        <main class="flex-1 bg-gray-100 py-6">
+            {{ $slot }}
+        </main>
+
+        <livewire:footer />
 
         @livewireScripts
     </body>

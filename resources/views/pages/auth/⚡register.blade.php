@@ -55,7 +55,7 @@ new class extends Component
 
             <p class="text-sm text-center mt-4">
                 Já possui conta?
-                <a href="/login" class="text-indigo-600 hover:underline">
+                <a href="/login" class="text-indigo-600 hover:underline cursor-pointer">
                     Entrar
                 </a>
             </p>

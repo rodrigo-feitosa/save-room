@@ -4,6 +4,7 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Http;
 use App\Models\GameUser;
 use Livewire\Attributes\Layout;
+use Illuminate\Http\Client\RequestException;
 
 new #[Layout('layouts::app')] class extends Component
 {
@@ -34,12 +35,17 @@ new #[Layout('layouts::app')] class extends Component
 
     public function mount()
     {
-        $response = Http::get('https://api.rawg.io/api/games', [
-            'key' => env('RAWG_API_KEY'),
-            'page_size' => 12
-        ]);
+        try{
+            $response = Http::get('https://api.rawg.io/api/games', [
+                'key' => env('RAWG_API_KEY'),
+                'page_size' => 12
+            ]);
 
-        $this->games = $response->json()['results'] ?? [];
+            $this->games = $response->json()['results'] ?? [];
+        } catch (RequestException $e) {
+            $this->games = [];
+            session()->flash('error', 'Catálogo indisponível');
+        }
     }
 
     public function openModal()
@@ -61,44 +67,29 @@ new #[Layout('layouts::app')] class extends Component
             return;
         }
 
-        $response = Http::get('https://api.rawg.io/api/games', [
-            'key' => env('RAWG_API_KEY'),
-            'search' => $this->search,
-            'page_size' => 5
-        ]);
+        try{
+            $response = Http::get('https://api.rawg.io/api/games', [
+                'key' => env('RAWG_API_KEY'),
+                'search' => $this->search,
+                'page_size' => 5
+            ]);
 
-        $this->searchResults = $response->json()['results'] ?? [];
+            $this->searchResults = $response->json()['results'] ?? [];
+        } catch (RequestException $e) {
+            $this->searchResults = [];
+            session()->flash('error', 'Catálogo indisponível');
+        }
     }
 
-    public function selectGame($index)
+    public function selectGame($gameId)
     {
-        $game = $this->searchResults[$index];
-
-        $response = Http::get("https://api.rawg.io/api/games/{$game['id']}", [
-            'key' => env('RAWG_API_KEY')
-        ]);
-
-        $details = $response->json();
-
-        $this->title = $details['name'] ?? '';
-        $this->description = strip_tags($details['description'] ?? '');
-        $this->release_date = $details['released'] ?? '';
-        $this->cover = $details['background_image'] ?? '';
-        $this->metacritic_score = $details['metacritic'] ?? null;
-
-        $this->developer = $details['developers'][0]['name'] ?? '';
-        $this->publisher = $details['publishers'][0]['name'] ?? '';
-
-        $this->searchResults = [];
-        $this->search = $details['name'];
-
-        $this->openModal();
+        return redirect()->route('game_details', ['id' => $gameId]);
     }
 
     public function addGame()
     {
         if (!auth()->check()) {
-            return redirect('/login');
+            return redirect()->route('login');
         }
 
         GameUser::create([
@@ -119,32 +110,33 @@ new #[Layout('layouts::app')] class extends Component
 
     public function addFromRawg($rawgId)
     {
-        $this->rawg_id = $rawgId;
+        try{
+            $this->rawg_id = $rawgId;
 
-        $response = Http::get("https://api.rawg.io/api/games/{$rawgId}", [
-            'key' => env('RAWG_API_KEY')
-        ]);
+            $response = Http::get("https://api.rawg.io/api/games/{$rawgId}", [
+                'key' => env('RAWG_API_KEY')
+            ]);
 
-        $game = $response->json();
+            $game = $response->json();
 
-        $this->title = $game['name'] ?? '';
-        $this->description = strip_tags($game['description'] ?? '');
-        $this->release_date = $game['released'] ?? '';
-        $this->cover = $game['background_image'] ?? '';
-        $this->metacritic_score = $game['metacritic'] ?? null;
+            $this->title = $game['name'] ?? '';
+            $this->description = strip_tags($game['description'] ?? '');
+            $this->release_date = $game['released'] ?? '';
+            $this->cover = $game['background_image'] ?? '';
+            $this->metacritic_score = $game['metacritic'] ?? null;
 
-        $this->developer = $game['developers'][0]['name'] ?? '';
-        $this->publisher = $game['publishers'][0]['name'] ?? '';
+            $this->developer = $game['developers'][0]['name'] ?? '';
+            $this->publisher = $game['publishers'][0]['name'] ?? '';
 
-        $this->showModal = true;
+            $this->showModal = true;
+        } catch(RequestException $e) {
+            session()->flash('error', 'Catálogo indisponível');
+        }
     }
 };
 ?>
 
 <div class="min-h-screen">
-    <!-- Header -->
-    <livewire:header />
-
     <!-- Seção Hero -->
     <section class="border-b">
         <div class="max-w-7xl mx-auto px-6 py-16 text-center">
@@ -162,7 +154,7 @@ new #[Layout('layouts::app')] class extends Component
 
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             @foreach ($games as $game)
-                <div class="bg-white rounded-xl shadow hover:shadow-lg transition">
+                <div wire:click="selectGame({{ $game['id'] }})" class="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
                     <img src="{{ $game['background_image'] }}" class="rounded-t-xl object-cover w-full h-40">
                     <div class="p-3">
                         <h4 class="font-semibold text-sm">{{ $game['name'] }}</h4>
@@ -181,30 +173,7 @@ new #[Layout('layouts::app')] class extends Component
             @endforeach
         </div>
     </section>
-
-    <!-- Recent Activity -->
-    <section class="bg-white border-t">
-        <div class="max-w-7xl mx-auto px-6 py-12">
-            <h3 class="text-2xl font-semibold mb-6">Atividade recente</h3>
-
-            <div class="space-y-4">
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    Você adicionou <strong>Elden Ring</strong> ao backlog
-                </div>
-
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    Você marcou <strong>Hollow Knight</strong> como concluído
-                </div>
-
-                <div class="bg-gray-100 p-4 rounded-lg">
-                    Você começou <strong>The Witcher 3</strong>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <livewire:footer />
-
+    
     @if ($showModal)
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div class="bg-white rounded-lg p-6 w-full max-w-md ">

@@ -17,7 +17,7 @@ new class extends Component
         ];
 
         if(Auth::attempt($credentials)){
-            return redirect('/');
+            return redirect()->route('index');
         }
 
         session()->flash('error', 'Email ou senha inválidos.');
@@ -73,7 +73,7 @@ new class extends Component
 
         <p class="text-sm text-center mt-4">
             Não possui conta?
-            <a href="/register" class="text-indigo-600 hover:underline">
+            <a href="/register" class="text-indigo-600 hover:underline cursor-pointer">
                 Registrar
             </a>
         </p>

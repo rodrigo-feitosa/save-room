@@ -30,10 +30,15 @@ new class extends Component
         $this->searchResults = $response->json()['results'] ?? [];
     }
 
+    public function selectGame($gameId)
+    {
+        return redirect()->route('game_details', ['id' => $gameId]);
+    }
+
     public function logout()
     {
         auth()->logout();
-        return redirect('/login');
+        return redirect()->route('index');
     }
 };
 ?>
@@ -57,7 +62,7 @@ new class extends Component
                 <div class="absolute left-0 top-full w-full border rounded mt-1 bg-white max-h-60 overflow-y-auto shadow-lg z-50">
                     @foreach($searchResults as $index => $result)
                         <div
-                            wire:click="selectGame({{ $index }})"
+                            wire:click="selectGame({{ $result['id'] }})"
                             class="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
                         >
                             <img

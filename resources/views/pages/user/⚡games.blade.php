@@ -31,9 +31,15 @@ new class extends Component
 
     public function loadGames()
     {
-        $userGames = GameUser::where('user_id', auth()->id())->get();
+        $response = Http::get('https://api.rawg.io/api/games', [
+            'key' => env('RAWG_API_KEY'),
+            'page' => $this->page,
+            'page_size' => 24
+        ]);
 
-        $this->games = array_merge($this->games, $userGames->toArray());
+        $newGames = $response->json()['results'] ?? [];
+
+        $this->games = array_merge($this->games, $newGames);
 
         $this->page++;
     }
@@ -58,7 +64,7 @@ new class extends Component
     public function addGame()
     {
         if (!auth()->check()) {
-            return redirect('/login');
+            return redirect()->route('login');
         }
 
         GameUser::create([
@@ -75,6 +81,11 @@ new class extends Component
         ]);
 
         $this->closeModal();
+    }
+
+    public function selectGame($gameId)
+    {
+        return redirect()->route('game_details', ['id' => $gameId]);
     }
 
     public function addFromRawg($rawgId)
@@ -101,13 +112,10 @@ new class extends Component
 };
 ?>
 <div class="min-h-screen bg-gray-100">
-    <!-- Header -->
-    <livewire:header />
-
     <div class="mt-5 max-w-9xl mx-auto px-6">
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             @foreach ($games as $game)
-                <div class="bg-white rounded-xl shadow hover:shadow-lg transition">
+                <div wire:click="selectGame({{ $game['id'] }})" class="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
                     <img src="{{ $game['background_image'] }}" class="rounded-t-xl object-cover w-full h-40">
                     <div class="p-3">
                         <h4 class="font-semibold text-sm">{{ $game['name'] }}</h4>
@@ -190,6 +198,4 @@ new class extends Component
             </div>
         </div>
     @endif
-
-    <livewire:footer />
 </div>

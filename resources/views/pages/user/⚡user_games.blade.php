@@ -7,15 +7,19 @@ use App\Models\GameUser;
 new class extends Component
 {
     public $games = [];
+    public $status;
     public $activeMenu = null;
+    public $selectedGameId;
+
+    public $showModal = false;
 
     public function mount()
     {
         if (!auth()->check()) {
-            return redirect('/login');
+            return redirect()->route('login');
         }
 
-        $userGames = GameUser::where('user_id', auth()->id())->get();
+        $userGames = GameUser::where('user_id', auth()->id())->whereNull('deleted_at')->get();
 
         $this->games = $userGames->map(function ($gameUser) {
             return [
@@ -40,12 +44,51 @@ new class extends Component
             $this->activeMenu = $gameId;
         }
     }
+
+    public function openModal($gameId)
+    {
+        $this->selectedGameId = $gameId;
+        $this->showModal = true;
+        $this->activeMenu = null;
+        $this->status = GameUser::where('game_id', $gameId)
+            ->where('user_id', auth()->id())
+            ->value('status');
+    }
+
+    public function closeModal()
+    {
+        $this->showModal = false;
+    }
+
+    public function updateStatus()
+    {
+        GameUser::where('game_id', $this->selectedGameId)
+            ->where('user_id', auth()->id())
+            ->update([
+                'status' => $this->status
+            ]);
+
+        $this->mount();
+        $this->closeModal();
+    }
+
+    public function removeGame($gameId)
+    {
+        GameUser::where('game_id', $gameId)
+            ->where('user_id', auth()->id())
+            ->delete();
+
+        $this->mount();
+    }
+
+    
+    public function selectGame($gameId)
+    {
+        return redirect()->route('game_details', ['id' => $gameId]);
+    }
 };
 ?>
 <div class="min-h-screen bg-gray-100">
-    <!-- Header -->
-    <livewire:header />
-
     <div class="max-w-7xl mx-auto px-6 py-12">
         <h1 class="text-3xl font-bold mb-8">
             Meu Backlog
@@ -59,7 +102,7 @@ new class extends Component
         @else
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 @foreach ($games as $game)
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden relative">
+                    <div wire:click="selectGame({{ $game['id'] }})" class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden relative cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
                         <div class="">
                             <button wire:click="toggleMenu({{ $game['id'] }})" class="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full p-1 shadow">
                                 <x-heroicon-o-ellipsis-vertical class="w-5 h-5 text-gray-600" />
@@ -67,11 +110,11 @@ new class extends Component
 
                             @if($activeMenu === $game['id'])
                                 <div class="absolute right-2 top-10 w-40 bg-white rounded-lg shadow-lg z-10">
-                                    <button class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
+                                    <button wire:click="openModal({{ $game['id'] }})" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                                         Atualizar status
                                     </button>
 
-                                    <button class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500">
+                                    <button wire:click="removeGame({{ $game['id'] }})" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500">
                                         Remover
                                     </button>
                                 </div>
@@ -114,4 +157,30 @@ new class extends Component
             </div>
         @endif
     </div>
+
+     @if ($showModal)
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md ">
+                <h2 class="text-xl font-bold mb-4">Atualizar status</h2>
+
+                <form wire:submit.prevent="updateStatus" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Status</label>
+                        <select wire:model="status" class="w-full border rounded px-2 py-2">
+                            <option value="backlog">Backlog</option>
+                            <option value="playing">Jogando</option>
+                            <option value="completed">Completado</option>
+                            <option value="dropped">Abandonado</option>
+                            <option value="wishlist">Wishlist</option>
+                        </select>
+                    </div>
+
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" wire:click="closeModal" class="px-4 py-2 bg-gray-300 rounded">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>

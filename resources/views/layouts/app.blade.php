@@ -14,7 +14,7 @@
     <body class="min-h-screen flex flex-col">
         <livewire:header />
 
-        <main class="flex-1 bg-gray-100 py-6">
+        <main class="flex-1 bg-gray-100">
             {{ $slot }}
         </main>
 

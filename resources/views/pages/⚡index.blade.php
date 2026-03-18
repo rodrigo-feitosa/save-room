@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\GameScreenshot;
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
 use App\Models\GameUser;
@@ -92,7 +93,7 @@ new #[Layout('layouts::app')] class extends Component
             return redirect()->route('login');
         }
 
-        GameUser::create([
+        $gameUser = GameUser::create([
             'user_id' => auth()->id(),
             'game_id' => $this->rawg_id,
             'status' => $this->status,
@@ -104,6 +105,17 @@ new #[Layout('layouts::app')] class extends Component
             'developers' => $this->developer,
             'publisher' => $this->publisher,
         ]);
+
+        $screens = Http::get("https://api.rawg.io/api/games/{$this->rawg_id}/screenshots", [
+            'key' => env('RAWG_API_KEY')
+        ]);
+
+        foreach(array_slice($screens->json()['results'] ?? [], 0, 5) as $screenshot) {
+            GameScreenshot::create([
+                'game_id' => $gameUser->id,
+                'screenshot' => $screenshot['image'] ?? null,
+            ]);
+        }
 
         $this->closeModal();
     }
@@ -154,10 +166,10 @@ new #[Layout('layouts::app')] class extends Component
 
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             @foreach ($games as $game)
-                <div wire:click="selectGame({{ $game['id'] }})" class="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
-                    <img src="{{ $game['background_image'] }}" class="rounded-t-xl object-cover w-full h-40">
+                <div class="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
+                    <img wire:click="selectGame({{ $game['id'] }})" src="{{ $game['background_image'] }}" class="rounded-t-xl object-cover w-full h-40">
                     <div class="p-3">
-                        <h4 class="font-semibold text-sm">{{ $game['name'] }}</h4>
+                        <h4 wire:click="selectGame({{ $game['id'] }})" class="font-semibold text-sm">{{ $game['name'] }}</h4>
                         <p class="text-xs text-gray-500">{{ $game['released'] }}</p>
                         <span class="space-x-2">
                             <span class="text-xs bg-green-500 text-white px-2 py-1 rounded">

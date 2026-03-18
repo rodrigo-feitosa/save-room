@@ -102,7 +102,7 @@ new class extends Component
         @else
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 @foreach ($games as $game)
-                    <div wire:click="selectGame({{ $game['id'] }})" class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden relative cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
+                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden relative cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
                         <div class="">
                             <button wire:click="toggleMenu({{ $game['id'] }})" class="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full p-1 shadow">
                                 <x-heroicon-o-ellipsis-vertical class="w-5 h-5 text-gray-600" />
@@ -121,11 +121,12 @@ new class extends Component
                             @endif
                         </div>
                         <img
+                            wire:click="selectGame({{ $game['id'] }})"
                             src="{{ $game['cover'] ?? 'https://placehold.co/600x800' }}"
                             class="w-full h-40 object-cover"
                         >
 
-                        <div class="p-3">
+                        <div wire:click="selectGame({{ $game['id'] }})" class="p-3">
                             <h4 class="font-semibold text-sm line-clamp-2">
                                 {{ $game['title'] }}
                             </h4>

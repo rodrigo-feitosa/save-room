@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\GameUser;
 use Livewire\Attributes\Layout;
 use Illuminate\Http\Client\RequestException;
+use App\Models\GameUserPlatform;
 
 new #[Layout('layouts::app')] class extends Component
 {
@@ -18,6 +19,7 @@ new #[Layout('layouts::app')] class extends Component
     public $developer;
     public $publisher;
     public $metacritic_score;
+    public $gameData = [];
     public $status = 'backlog';
 
     public $showModal = false;
@@ -89,6 +91,8 @@ new #[Layout('layouts::app')] class extends Component
 
     public function addGame()
     {
+        $platformIds = [];
+
         if (!auth()->check()) {
             return redirect()->route('login');
         }
@@ -117,6 +121,15 @@ new #[Layout('layouts::app')] class extends Component
             ]);
         }
 
+        foreach ($this->gameData['platforms'] ?? [] as $p) {
+            $platformData = $p['platform'];
+
+            GameUserPlatform::create([
+                'game_user_id' => $gameUser->id,
+                'platform' => $platformData['name'] ?? null
+            ]);
+        }
+
         $this->closeModal();
     }
 
@@ -130,6 +143,7 @@ new #[Layout('layouts::app')] class extends Component
             ]);
 
             $game = $response->json();
+            $this->gameData = $game;
 
             $this->title = $game['name'] ?? '';
             $this->description = strip_tags($game['description'] ?? '');

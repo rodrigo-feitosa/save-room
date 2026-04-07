@@ -115,17 +115,17 @@ new class extends Component
     <div class="mt-5 max-w-9xl mx-auto px-6">
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             @foreach ($games as $game)
-                <div wire:click="selectGame({{ $game['id'] }})" class="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
-                    <img src="{{ $game['background_image'] }}" class="rounded-t-xl object-cover w-full h-40">
+                <div class="bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer hover:bg-gray-50 hover:scale-[1.02]">
+                    <img wire:click="selectGame({{ $game['id'] }})" src="{{ $game['background_image'] }}" class="rounded-t-xl object-cover w-full h-40">
                     <div class="p-3">
-                        <h4 class="font-semibold text-sm">{{ $game['name'] }}</h4>
+                        <h4 wire:click="selectGame({{ $game['id'] }})" class="font-semibold text-sm">{{ $game['name'] }}</h4>
                         <p class="text-xs text-gray-500">{{ $game['released'] }}</p>
                         <span class="space-x-2">
                             <span class="text-xs bg-green-500 text-white px-2 py-1 rounded">
                                 <img src="{{ asset('imgs/metacritic_logo.png') }}" alt="Metacritic" class="w-4 h-4 inline mr-1">
                                 {{ $game['metacritic'] }}
                             </span>
-                            <button wire:click="addFromRawg({{ $game['id'] }})" class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                            <button wire:click="addFromRawg({{ $game['id'] }})" class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 cursor-pointer">
                                 Adicionar
                             </button>
                         </span>
@@ -191,8 +191,8 @@ new class extends Component
                     </div>
 
                     <div class="flex justify-end space-x-4">
-                        <button type="button" wire:click="closeModal" class="px-4 py-2 bg-gray-300 rounded">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button>
+                        <button type="button" wire:click="closeModal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 cursor-pointer">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">Salvar</button>
                     </div>
                 </form>
             </div>

@@ -202,7 +202,7 @@ new #[Layout('layouts::app')] class extends Component
     
     @if ($showModal)
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md ">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <h2 class="text-xl font-bold mb-4">Adicionar novo jogo</h2>
 
                 <form wire:submit.prevent="addGame" class="space-y-4">
